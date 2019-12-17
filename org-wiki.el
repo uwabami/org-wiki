@@ -112,12 +112,6 @@ You can toggle read-only mode with M-x read-only-mode or C-x C-q."
 
 
 ;; ====== Optional Clip.jar image pasting app =========== ;;
-(defcustom org-wiki-backup-location nil
-  "Path to backup directory."
-  :type 'directory
-  :group 'org-wiki
-  )
-
 ;; ;; Optional Clip.jar image pasting app
 ;; (defcustom org-wiki-clip-jar-path "~/bin/Clip.jar"
 ;;   "Path to Clip.jar utility to paste images from clipboard."
@@ -523,23 +517,23 @@ point: 'Unix/Manual.pdf'."
   (interactive)
   (command-apropos "org-wiki-"))
 
-(defun org-wiki-switch-root ()
-  "Switch org-wiki root directory"
-  (interactive)
-  (let* ((p
-          (ido-completing-read "Org-wiki root dir: "
-                               (mapcar (lambda (p)
-                                         (cons (format "%s - %s" (file-name-nondirectory p) p) p))
-                                 (mapcar #'string-trim org-wiki-location-list)))
-          ;; org-wiki root directory
-          (if org-wiki-close-root-switch (org-wiki-close))
-          ;; set new org-wiki location
-          (setq org-wiki-location p)
-          ;; Go to index page
-          (org-wiki-index)
-          ;; Inform user about new directory
-          (message (format "Org-wiki root dir set to: %s" p))
-          ))))
+;; (defun org-wiki-switch-root ()
+;;   "Switch org-wiki root directory"
+;;   (interactive)
+;;   (let ((p
+;;          (ido-completing-read "Org-wiki root dir: "
+;;                               (mapcar (lambda (p)
+;;                                         (cons (format "%s - %s" (file-name-nondirectory p) p) p))
+;;                                       (mapcar #'string-trim org-wiki-location-list)))
+;;          ;; org-wiki root directory
+;;          (if org-wiki-close-root-switch (org-wiki-close))
+;;          ;; set new org-wiki location
+;;          (setq org-wiki-location p)
+;;          ;; Go to index page
+;;          (org-wiki-index)
+;;          ;; Inform user about new directory
+;;          (message (format "Org-wiki root dir set to: %s" p))
+;;          ))))
 
 (defun org-wiki-index ()
   "Open the index page: <org-wiki-location>/index.org.
@@ -624,7 +618,7 @@ to cancel the download."
    (lambda (pagename output-file)
      (save-excursion (insert (format "file:%s/%s" pagename output-file ))))))
 
-;;; autoload
+;;;###autoload
 (defun org-wiki-ido ()
   "Use `ido-completing-read' to \\[dired] a org--wiki-page-list"
   (interactive)
@@ -633,7 +627,7 @@ to cancel the download."
     (if (find-file (org-wiki--page->file path))
         (message (format "Open org-wiki-page: %s" path)))))
 
-;;; autoload
+;;;###autoload
 (defun org-wiki-ido-read-only ()
   "Use `ido-completing-read' to \\[dired] a org--wiki-page-list"
   (interactive)
@@ -970,50 +964,55 @@ Note: This function doesn't freeze Emacs since it starts another Emacs process."
      (message (format "Copied to clipboard: %s" msg))
      (clipboard-kill-region (point-min) (point-max)))))
 
-;; ============ Backup Commands =============== ;;
-(defun org-wiki-backup-make ()
-  "Make a org-wiki backup."
-  (interactive)
-  (let* ((zipfile
-          (concat "org-wiki-" (format-time-string "%Y-%m-%d") ".zip"))
-         (destfile
-          (concat (file-name-directory org-wiki-backup-location) zipfile))
-         (default-directory
-           org-wiki-location))
-    (switch-to-buffer "*org-wiki-backup*")
-    ;; Crate org-wiki backup location directory if doesn't exist.
-    (if (not (file-exists-p org-wiki-backup-location))
-        (make-directory org-wiki-backup-location t))
-    (if (file-exists-p destfile) (delete-file destfile))
-    (if (file-exists-p zipfile)  (delete-file zipfile))
-    ;; Clear buffer removing all lines
-    (delete-region (point-min) (point-max))
-    (set-process-sentinel
-     (start-process
-      "org-wiki-backup" ;; Process name
-      "*org-wiki-backup*" ;; Buffer where output is displayed.
-      ;; Shell command
-      "zip" "-r" "-9" zipfile ".")
-     (lexical-let ((zipfile  zipfile)
-                   (destfile destfile))
-       (lambda (process state)
-         (when (equal (process-exit-status process) 0)
-           (switch-to-buffer "*org-wiki-backup*")
-           (rename-file zipfile org-wiki-backup-location t)
-           (message "Backup done. Ok.")
-           (insert  "\nBackup done. Ok")
-           ))))))
+;; ;; ============ Backup Commands =============== ;;
+;; (defcustom org-wiki-backup-location nil
+;;   "Path to backup directory."
+;;   :type 'directory
+;;   :group 'org-wiki
+;;   )
+;; (defun org-wiki-backup-make ()
+;;   "Make a org-wiki backup."
+;;   (interactive)
+;;   (let* ((zipfile
+;;           (concat "org-wiki-" (format-time-string "%Y-%m-%d") ".zip"))
+;;          (destfile
+;;           (concat (file-name-directory org-wiki-backup-location) zipfile))
+;;          (default-directory
+;;            org-wiki-location))
+;;     (switch-to-buffer "*org-wiki-backup*")
+;;     ;; Crate org-wiki backup location directory if doesn't exist.
+;;     (if (not (file-exists-p org-wiki-backup-location))
+;;         (make-directory org-wiki-backup-location t))
+;;     (if (file-exists-p destfile) (delete-file destfile))
+;;     (if (file-exists-p zipfile)  (delete-file zipfile))
+;;     ;; Clear buffer removing all lines
+;;     (delete-region (point-min) (point-max))
+;;     (set-process-sentinel
+;;      (start-process
+;;       "org-wiki-backup" ;; Process name
+;;       "*org-wiki-backup*" ;; Buffer where output is displayed.
+;;       ;; Shell command
+;;       "zip" "-r" "-9" zipfile ".")
+;;      (lexical-let ((zipfile  zipfile)
+;;                    (destfile destfile))
+;;        (lambda (process state)
+;;          (when (equal (process-exit-status process) 0)
+;;            (switch-to-buffer "*org-wiki-backup*")
+;;            (rename-file zipfile org-wiki-backup-location t)
+;;            (message "Backup done. Ok.")
+;;            (insert  "\nBackup done. Ok")
+;;            ))))))
 
-(defun org-wiki-backup-dir ()
-  "Open org-wiki backup directory in dired mode."
-  (interactive)
-  ;; Create org-wiki backup location directory if doesn't exist.
-  (if (not (file-exists-p org-wiki-backup-location))
-      (make-directory org-wiki-backup-location t))
-  ;; Open backup location
-  (dired org-wiki-backup-location)
-  ;; Update buffer
-  (revert-buffer))
+;; (defun org-wiki-backup-dir ()
+;;   "Open org-wiki backup directory in dired mode."
+;;   (interactive)
+;;   ;; Create org-wiki backup location directory if doesn't exist.
+;;   (if (not (file-exists-p org-wiki-backup-location))
+;;       (make-directory org-wiki-backup-location t))
+;;   ;; Open backup location
+;;   (dired org-wiki-backup-location)
+;;   ;; Update buffer
+;;   (revert-buffer))
 
 ;; ============ Command Alias ================= ;;
 
