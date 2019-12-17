@@ -1,14 +1,12 @@
 ;;; org-wiki.el --- Desktop wiki extension for org-mode  -*- lexical-binding: t; -*-
-
-;; MIT/X11
-
+;;
 ;; Author: Youhei SASAKI     <uwabami@gfd-dennou.org>
 ;; Maintainer: Youhei SASAKI <uwabami@gfd-dennou.org>
 ;; Keywords: org-mode, wiki, notes, notebook
 ;; Version: 5.1
 ;; URL: https://www.github.com/uwabami/org-wiki
 ;; Package-Requires: ((cl-lib "0.5"))
-
+;;
 ;; Original Version: https://www.github.com/caiorss/org-wiki', Public Domain
 ;; Original Author: Caio Rodrigues <caiorss DOT rodrigues AT gmail DOT com>
 ;;
@@ -31,15 +29,15 @@
 ;; CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 ;; TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 ;; SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+;;
 ;;; Commentary:
 ;;
 ;; Org-wiki is a org-mode extension that provides tools to manage and
 ;; build a desktop wiki where each wiki page is an org-mode file.
 ;;
-
+;;
 ;;; Code:
-
+;;
 ;; external libraries
 (require 'ox-html)
 
@@ -49,6 +47,7 @@
 (require 'subr-x)     ;; Provides string trim functions.
 
 ;; ****************** U S E R - S E T T I N G S ************************ ;;
+
 
 (defgroup org-wiki nil
   "Org-wiki Settings"
@@ -79,19 +78,19 @@ You can toggle read-only mode with M-x read-only-mode or C-x C-q."
 
 
 
-;;; =======  Python Webserver Settings =========== ;;
+;; ;;; =======  Python Webserver Settings =========== ;;
 
-(defcustom org-wiki-server-port "8000"
-  "Default port to server org-wiki static files server."
-  :type  'string
-  :group 'org-wiki
-  )
+;; (defcustom org-wiki-server-port "8000"
+;;   "Default port to server org-wiki static files server."
+;;   :type  'string
+;;   :group 'org-wiki
+;;   )
 
-(defcustom org-wiki-server-host "0.0.0.0"
-  "Default address that the server listens to."
-  :type  'string
-  :group 'org-wiki
-  )
+;; (defcustom org-wiki-server-host "0.0.0.0"
+;;   "Default address that the server listens to."
+;;   :type  'string
+;;   :group 'org-wiki
+;;   )
 
 ;; ======== Async export settings ================ ;;
 
@@ -119,19 +118,16 @@ You can toggle read-only mode with M-x read-only-mode or C-x C-q."
   :group 'org-wiki
   )
 
-;; Optional Clip.jar image pasting app
-(defcustom org-wiki-clip-jar-path "~/bin/Clip.jar"
-  "Path to Clip.jar utility to paste images from clipboard."
-  :type 'file
-  :group 'org-wiki
-  )
-
-
+;; ;; Optional Clip.jar image pasting app
+;; (defcustom org-wiki-clip-jar-path "~/bin/Clip.jar"
+;;   "Path to Clip.jar utility to paste images from clipboard."
+;;   :type 'file
+;;   :group 'org-wiki
+;;   )
 
 ;;; Default index page (index.org) accessed with M-x org-wiki-index
 ;;
 (defvar org-wiki-index-file-basename "index")
-
 
 ;;; Additional publishing options
 (defcustom org-wiki-publish-plist '()
@@ -158,7 +154,7 @@ You can toggle read-only mode with M-x read-only-mode or C-x C-q."
   :group 'org-wiki
   )
 
-;; ********************** I N T E R N A L - F U N C T I O N S ************************* ;;
+;; ***** I N T E R N A L - F U N C T I O N S ***** ;;
 ;;
 
 ;; @SECTION: Internal functionsq
@@ -177,17 +173,17 @@ You can toggle read-only mode with M-x read-only-mode or C-x C-q."
   "Return all org-wiki page buffers (.org) files in `org-wiki-location`."
  (org-wiki--start-location)
  (cl-remove-if-not (lambda (p)
-                 (let* ((fp (buffer-file-name p))
-                        (fpath (if fp (expand-file-name fp) nil))
-                        )
-                         ;; path test if file exists (if fpath not nil)
-                   (and  fpath
-                         ;; test if buffer file is in wiki location
-                         (string-prefix-p (expand-file-name org-wiki-location) fpath)
-                         ;; test if buffer file has extension .org
-                         (string-suffix-p ".org" fpath)
-                    )))
-               (buffer-list)))
+                     (let* ((fp (buffer-file-name p))
+                            (fpath (if fp (expand-file-name fp) nil))
+                            )
+                       ;; path test if file exists (if fpath not nil)
+                       (and  fpath
+                             ;; test if buffer file is in wiki location
+                             (string-prefix-p (expand-file-name org-wiki-location) fpath)
+                             ;; test if buffer file has extension .org
+                             (string-suffix-p ".org" fpath)
+                             )))
+                   (buffer-list)))
 
 (defun org-wiki--normalize-path (path)
   "Replace double slashes for a single slash and remove slash at the end of a PATH."
@@ -199,7 +195,6 @@ You can toggle read-only mode with M-x read-only-mode or C-x C-q."
 (defun  org-wiki--path-equal (p1 p2)
   "Test if paths P1 and P2 are equal."
   (equal (org-wiki--normalize-path p1) (org-wiki--normalize-path p2)))
-
 
 (defun org-wiki--file->page (filename)
   "Get a wiki page name from a FILENAME.
@@ -217,7 +212,6 @@ ELISP> (org-wiki/replace-extension \"file.org\" \"html\" )
           "."
           extension
           ))
-
 
 (defun org-wiki--page->file (pagename)
   "Get the corresponding wiki file (*.org) to the wiki PAGENAME.
@@ -300,15 +294,6 @@ Example: '(\"Linux\" \"BSD\" \"Bash\"  \"Binary_Files\")"
   (mapcar #'org-wiki--file->page (org-wiki--page-files)))
 
 
-;; @REVIEW: Function for future use.
-;;
-;; (defun org-wiki--get-page (wikipage)
-;;   (org-wiki--concat-path org-wiki-location
-;;                     (replace-regexp-in-string "\s" "_"
-;;                     (replace-regexp-in-string "%20" "_"
-;;                      (concat wikipage ".org")))))
-
-
 (defun org-wiki--assets-get-dir (pagename)
   "Get path to asset directory of given PAGENAME."
   (org-wiki--concat-path org-wiki-location pagename))
@@ -333,7 +318,6 @@ if it doesn't exist yet."
         (org-wiki--assets-make-dir
          (file-name-base (buffer-file-name))))
     (message "Error: Not in a wiki page.")))
-
 
 (defun org-wiki--is-buffer-in (b)
   "Check if buffer is an org-wiki buffer.
@@ -388,7 +372,6 @@ Will open the the wiki file Linux.org in
           (find-file  org-wiki-file))
         )))
 
-
 (defun org-wiki--assets-get-file (pagename filename)
   "Return a path to an asset file FILENAME in given PAGENAME."
   (org-wiki--concat-path (org-wiki--assets-get-dir pagename) filename))
@@ -399,7 +382,6 @@ Will open the the wiki file Linux.org in
 Example: (org-wiki--assets-open-file-emacs \"Python\" \"example1.py\")
 It will open the file <wiki path>/Python/example1.py related to the page Python.org."
   (find-file  (org-wiki--assets-get-file pagename filename)))
-
 
 (defun org-wiki-xdg-open (filename)
   "Open a file FILENAME with default system application.
@@ -442,7 +424,6 @@ Running in Mac OSX invokes open"
                    "cmd"  "/C"  "start" "" (expand-file-name filename))
 
        ))) ;; End of org-wiki/xdg-open
-
 
 (defun org-wiki--protocol-open-assets-with-sys (link)
   "Org-mode protocol handler to open an asset with default system app.
@@ -488,6 +469,7 @@ points to the file <org wiki location>/Blueprint/box1.dwg."
             (org-add-link-type  "wiki-asset-sys"
                                 #'org-wiki--protocol-open-assets-with-sys
                                 #'org-wiki--asset-link)))
+
 
 (defun org-wiki--asset-page-files (pagename)
   "Get all asset files from a given PAGENAME."
@@ -548,15 +530,16 @@ point: 'Unix/Manual.pdf'."
           (ido-completing-read "Org-wiki root dir: "
                                (mapcar (lambda (p)
                                          (cons (format "%s - %s" (file-name-nondirectory p) p) p))
-                                       (mapcar #'string-trim org-wiki-location-list)))))
-    ;; org-wiki root directory
-    (if org-wiki-close-root-switch (org-wiki-close))
-    ;; set new org-wiki location
-    (setq org-wiki-location p)
-    ;; Go to index page
-    (org-wiki-index)
-    ;; Inform user about new directory
-    (message (format "Org-wiki root dir set to: %s" p))))
+                                 (mapcar #'string-trim org-wiki-location-list)))
+          ;; org-wiki root directory
+          (if org-wiki-close-root-switch (org-wiki-close))
+          ;; set new org-wiki location
+          (setq org-wiki-location p)
+          ;; Go to index page
+          (org-wiki-index)
+          ;; Inform user about new directory
+          (message (format "Org-wiki root dir set to: %s" p))
+          ))))
 
 (defun org-wiki-index ()
   "Open the index page: <org-wiki-location>/index.org.
@@ -597,91 +580,6 @@ point: 'Unix/Manual.pdf'."
   (let ((pagename (file-name-base (buffer-file-name))))
     (org-wiki--assets-make-dir pagename)
     (dired (org-wiki--assets-get-dir pagename))))
-
-(defun org-wiki-asset-insert ()
-  "Insert link wiki-asset-sys:<page>;<file> to an asset file of current page..
-It inserts a link of type wiki-asset-sys:<Wiki-page>;<Asset-File>
-Example:  [[wiki-asset-sys:Linux;LinuxManual.pdf]]"
-  (interactive)
-  (let* ((file
-          (ido-completing-read "Files: " (delete-dups (org-wiki--page-list)))))
-    (insert (format "[[wiki-asset-sys:%s;%s][%s]]"
-                    (file-name-base (org-wiki--current-page-asset-dir))
-                    (file-name-nondirectory file)
-                    (read-string "Description: " (file-name-nondirectory file))
-                    ))))
-
-(defun org-wiki-asset-insert-file ()
-  "Insert link file:<page>/<file> to asset file of current page at point.
-Use this command to insert link to files that can be opened with
-Emacs like source codes. It will insert a link like this
-- [[file:Python/GpsScript.py][GpsScript.py]]."
-  (interactive)
-  (let* ((file
-          (ido-completing-read "Files: " (delete-dups (org-wiki--page-list)))))
-    (save-excursion
-      (insert (org-make-link-string
-               (concat "file:" file)
-               (file-name-nondirectory file)
-               )))))
-
-(defun org-wiki-asset-insert-image ()
-  "Insert link file:<page>/<file> to images asset file at point.
-This command is similar to org-wiki-asset-insert-file but it inserts a link
-in this way: [[file:Linux/logo.png][file:Linux/logo.png/]]."
-  (interactive)
-  (let* ((file
-          (ido-completing-read "Files: " (delete-dups (org-wiki--page-list)))))
-    (save-excursion
-      (insert (org-make-link-string
-               (concat "file:" file)
-               (concat "file:" file)
-               )))))
-
-
-
-(defun org-wiki-asset-insert-block ()
-  "Insert code block with contents of some asset file."
-  (interactive)
-  (let* ((file
-          (ido-completing-read "Files: " (delete-dups (org-wiki--page-list)))))
-    (save-excursion
-      (insert (concat " - File: " (org-make-link-string (concat "file:" file))))
-      (insert "\n\n")
-      (insert "#+BEGIN_SRC text\n")
-      (insert "  ")
-      (insert (replace-regexp-in-string
-               "\n"
-               "\n  "
-               (with-temp-buffer
-                 (insert-file-contents file)
-                 (buffer-substring-no-properties (point-min) (point-max)))))
-      (insert "\n#+END_SRC")
-      )))
-
-(defun org-wiki-asset-find-file ()
-  "Open a menu to select an asset file of current page and open it with Emacs.
-Note: see 'org-wiki-asset-find-sys'
-
-Example: If the current page is 'Smalltalk programming' and the user select the
-file 'extendingClasses-number1.gst' it will open the file below with Emacs.
-
- - Smalltalk programming/'extendingClasses-number1.gst"
-  (interactive)
-  (let* ((file
-          (ido-completing-read "Files: " (delete-dups (org-wiki--page-list)))))
-    (find-file file)))
-
-(defun org-wiki-asset-find-sys ()
-  "Open a menu to select an asset file of current page and open it with system's app.
-Example: If the current page is 'Smalltalk programming' and the
-user select the file 'numerical-methods-in-smalltalk.pdf' it will
-be opened with the default system's application like Foxit PDF or
-Okular reader."
-  (interactive)
-  (let* ((file
-          (ido-completing-read "Files: " (delete-dups (org-wiki--page-list)))))
-    (org-wiki-xdg-open file)))
 
 (defun org-wiki-asset-create ()
   "Prompts the user for a file name that doesn't exist yet and insert it at point.
@@ -726,49 +624,23 @@ to cancel the download."
    (lambda (pagename output-file)
      (save-excursion (insert (format "file:%s/%s" pagename output-file ))))))
 
-(defun org-wiki ()
-  "Browser the wiki files"
+;;; autoload
+(defun org-wiki-ido ()
+  "Use `ido-completing-read' to \\[dired] a org--wiki-page-list"
   (interactive)
-  (let* ((file
-          (ido-completing-read "Org-Wiki: " (delete-dups (org-wiki--page-list)))))
-    (org-wiki--open-page file)))
+  (let ((path (ido-completing-read "Find org-wiki page.: "
+                                   (org-wiki--page-list))))
+    (if (find-file (org-wiki--page->file path))
+        (message (format "Open org-wiki-page: %s" path)))))
 
-(defun org-wiki-read-only ()
-  "Open wiki page in read-only mode."
+;;; autoload
+(defun org-wiki-ido-read-only ()
+  "Use `ido-completing-read' to \\[dired] a org--wiki-page-list"
   (interactive)
-  (let* ((pagename
-          (ido-completing-read "Org-Wiki: " (delete-dups (org-wiki--page-list)))))
-    (find-file-read-only
-     (org-wiki--page->file pagename))))
-
-(defun org-wiki-frame ()
-  "Browser the wiki files and opens it in a new frame."
-  (interactive)
-  (let* ((act
-          (ido-completing-read "Org-Wiki: " (delete-dups (org-wiki--page-list)))))
-    (with-selected-frame (make-frame)
-      (set-frame-name (concat "Org-wiki: " act))
-      (org-wiki--open-page act))))
-
-(defun org-wiki-switch ()
-  "Switch between org-wiki page buffers."
-  (interactive)
-  (let* ((buffer
-         (ido-completing-read "Wiki Pages: "
-                              (mapcar (lambda (b)
-                                        (cons (org-wiki--file->page (buffer-file-name b))
-                                              b
-                                              ))
-                                      (org-wiki--get-buffers)))))
-    (switch-to-buffer buffer)))
-
-(defun org-wiki-html ()
-  "Browser the wiki files"
-  (interactive)
-  (let* ((page
-          (ido-completing-read "Wiki Pages: "
-                               (delete-dups (org-wiki--page-list)))))
-    (org-wiki--open-page page)))
+  (let ((path (ido-completing-read "Find org-wiki page.: "
+                                   (org-wiki--page-list))))
+    (if (find-file-read-only (org-wiki--page->file path))
+        (message (format "Open org-wiki-page: %s - read-only mode" path)))))
 
 (defun org-wiki-close ()
   "Close all opened wiki pages buffer and save them."
@@ -800,9 +672,9 @@ to cancel the download."
 (defun org-wiki-insert-link ()
   "Insert a Wiki link at point for a existing page."
   (interactive)
-  (let* ((page
-          (ido-completing-read "Org-Wiki: " (delete-dups (org-wiki--page-list)))))
-    (insert (org-wiki--make-link page))))
+  (let ((page (ido-completing-read "Insert Link:"
+                                   (org-wiki--make-link page))))
+    (insert page)))
 
 (defun org-wiki-insert-new ()
   "Create a new org-wiki and insert a link to it at point."
@@ -849,15 +721,6 @@ to cancel the download."
   (interactive)
   (org-wiki--assets-buffer-make-dir)
   (org-wiki-xdg-open (file-name-base (buffer-file-name))))
-
-(defun org-wiki-assets ()
-  "Open the assets directory of a wiki page."
-  (interactive)
-  (let* ((page
-          (ido-completing-read "Org-Wiki: " (delete-dups (org-wiki--page-list)))))
-    (org-wiki--assets-make-dir page)
-    (dired (org-wiki--assets-get-dir page))))
-
 
 (defun org-wiki-make-org-publish-plist (org-exporter)
   "Prepare plist for use with `org-publish'."
@@ -913,218 +776,109 @@ Note: This function doesn't freeze Emacs since it starts another Emacs process."
                       " "
                       )))
 
-(defun org-wiki-make-menu ()
-  "Optional command to build an utility menu."
-  (interactive)
-  (easy-menu-define org-wik-menu global-map "Org-wiki"
 
-    `("org-wiki"
-      ("Main"
-       ["Go to Index page \nM-x org-wiki-index" (org-wiki-index)]
-
-       ["---" nil]
-       ["Browsing" nil]
-       ["Browse page \nM-x org-wiki" (org-wiki)]
-       ["Browse page in other frame \nM-x org-wiki-frame" (org-wiki-frame)]
-       ["Browse pages in read-only mode \nM-x org-wiki-read-only" (org-wiki-read-only)]
-       ["---" nil]
-       ["Wiki Directory" nil]
-       ["Open org-wiki directory \nM-x org-wiki-dired" (org-wiki-dired)]
-       ["Open org-wiki directory with system's file manager.\nM-x org-wiki-open" (org-wiki-open)]
-       ["Close all pages \nM-x org-wiki-close" (org-wiki-close)]
-
-       ["---" nil]
-       ["Html export" nil]
-       ["Open index page (html) in the browser \nM-x org-wiki-index-html" (org-wiki-index-html)]
-       ["Export all pages to html \nM-x org-wiki-export-html" (org-wiki-export-html)]
-       ["Help - Show all org-wiki commands \nM-x org-wiki-help" (org-wiki-help)]
-       )
-      ["---"  nil]
-      ("Page Commands"
-       ["Browse current page asset directory.\nM-x org-wiki-asset-dired"
-        (org-wiki-asset-dired)]
-       ["Browse current page asset directory with system's file manager.\nM-x org-wiki-asset-open"
-        (org-wiki-asset-open)]
-
-        ["Insert a link to a wiki page \nM-x org-wiki-insert" (org-wiki-insert)]
-        ["Insert a link of type wiki-asset-sys at point.\nM-x org-wiki-asset-insert"
-        (org-wiki-asset-insert)]
-        ["Insert a link of type file:<page>/<asset> at point.\nM-x org-wiki-asset-insert-file"
-         (org-wiki-asset-insert-file)
-         ]
-        ["Download an asset file and insert a wiki-asset-sys link at point.\nM-x org-wiki-asset-download-insert1"
-         (org-wiki-asset-download-insert1)
-         ]
-
-        ["Download an asset file and insert a link at point of type file:<page>/<file.pdf>.\nM-x org-wiki-asset-download-insert2"
-         (org-wiki-asset-download-insert2)]
-
-        )
-       ["---"  nil]
-       ("Org-mode"
-       ["Toggle Read only    \nM-x read-only-mode"               (read-only-mode 'toggle)]
-       ["Toggle Images       \nM-x org-toggle-inline-images"     (org-toggle-inline-images)]
-       ["Toggle Link display \nM-x org-toggle-link-display"      (org-toggle-link-display)]
-      ))))
-
-
-;;
 ;; Despite this function was implemented as a interface to
 ;; Python3 simple http server, it can be refactored to work
 ;; with another more powerful http server such as Nginx.
 ;;
-(defun org-wiki-server-toggle ()
-  "Start/stop org-wiki http server. It requires Python3.
-Note: This command requires Python3 installed."
-  (interactive)
-  (let (
-        ;; Process name
-        (pname  "org-wiki-server")
-        ;; Buffer name - Display process output (stdout)
-        (bname   "*org-wiki-server*")
-        ;; Set current directory to org-wiki repository.
-        (default-directory org-wiki-location))
-    (if (not (get-buffer bname))
-        (progn
-          (sit-for 0.1)
-          (switch-to-buffer bname)
-          (save-excursion ;; Save cursor position
-           (insert "Server started ...\n\n")
-           (message "\nServer started ...\n")
+;; (defun org-wiki-server-toggle ()
+;;   "Start/stop org-wiki http server. It requires Python3.
+;; Note: This command requires Python3 installed."
+;;   (interactive)
+;;   (let (
+;;         ;; Process name
+;;         (pname  "org-wiki-server")
+;;         ;; Buffer name - Display process output (stdout)
+;;         (bname   "*org-wiki-server*")
+;;         ;; Set current directory to org-wiki repository.
+;;         (default-directory org-wiki-location))
+;;     (if (not (get-buffer bname))
+;;         (progn
+;;           (sit-for 0.1)
+;;           (switch-to-buffer bname)
+;;           (save-excursion ;; Save cursor position
+;;            (insert "Server started ...\n\n")
+;;            (message "\nServer started ...\n")
 
-           ;; Show machine network cards' IP addresses.
-           (cl-case system-type
-                                        ;;; Linux
-             (gnu/linux       (insert (shell-command-to-string "ifconfig")))
-                                        ;;; Free BSD OS
-             (gnu/kfreebsd    (insert (shell-command-to-string "ifconfig")))
-                                        ;; Mac OSX - (Not tested )
-             (darwin          (insert (shell-command-to-string "ifconfig")))
-                                        ;; Windows 7, 8, 10 - Kernel NT
-             (windows-nt      (insert (shell-command-to-string "ipconfig")))))
-          (start-process pname
-                         bname
-                         "python3"
-                         "-m"
-                         "http.server"
-                         "--bind"
-                         org-wiki-server-host
-                         org-wiki-server-port)
-          (when (y-or-n-p "Open server in browser ?")
-            (browse-url (format "http://localhost:%s" org-wiki-server-port))))
-        (progn  (switch-to-buffer bname)
-                (kill-process (get-process pname))
-                (message "Server stopped.")
-                ))))
+;;            ;; Show machine network cards' IP addresses.
+;;            (cl-case system-type
+;;                                         ;;; Linux
+;;              (gnu/linux       (insert (shell-command-to-string "ifconfig")))
+;;                                         ;;; Free BSD OS
+;;              (gnu/kfreebsd    (insert (shell-command-to-string "ifconfig")))
+;;                                         ;; Mac OSX - (Not tested )
+;;              (darwin          (insert (shell-command-to-string "ifconfig")))
+;;                                         ;; Windows 7, 8, 10 - Kernel NT
+;;              (windows-nt      (insert (shell-command-to-string "ipconfig")))))
+;;           (start-process pname
+;;                          bname
+;;                          "python3"
+;;                          "-m"
+;;                          "http.server"
+;;                          "--bind"
+;;                          org-wiki-server-host
+;;                          org-wiki-server-port)
+;;           (when (y-or-n-p "Open server in browser ?")
+;;             (browse-url (format "http://localhost:%s" org-wiki-server-port))))
+;;         (progn  (switch-to-buffer bname)
+;;                 (kill-process (get-process pname))
+;;                 (message "Server stopped.")
+;;                 ))))
 
-(defun org-wiki-paste-image ()
-  "Paste a image asking the user for the file name."
-  (interactive)
-  (let* ((dir   (file-name-as-directory
-                   (file-name-base
-                    (buffer-file-name))))
-           (image-name (read-string "Image name: " )))
-    (org-wiki--assets-make-dir dir)
-    (insert "#+CAPTION: ")
-    (save-excursion
-      (insert image-name)
-      (insert "\n")
-      (insert
-       (org-make-link-string
-        (concat "file:"
-                (string-trim
-                 (shell-command-to-string
-                  (mapconcat #'identity
-                             `("java"
-                               "-jar"
-                               ;;,(expand-file-name "~/bin/Clip.jar")
-                               ,(expand-file-name  org-wiki-clip-jar-path)
-                               "--name"
-                               ,(concat "\"" image-name "\"")
-                               ,(concat "\"" dir "\"")
-                               )
-                             " "
-                             )))))))))
+;; (defun org-wiki-paste-image ()
+;;   "Paste a image asking the user for the file name."
+;;   (interactive)
+;;   (let* ((dir   (file-name-as-directory
+;;                    (file-name-base
+;;                     (buffer-file-name))))
+;;            (image-name (read-string "Image name: " )))
+;;     (org-wiki--assets-make-dir dir)
+;;     (insert "#+CAPTION: ")
+;;     (save-excursion
+;;       (insert image-name)
+;;       (insert "\n")
+;;       (insert
+;;        (org-make-link-string
+;;         (concat "file:"
+;;                 (string-trim
+;;                  (shell-command-to-string
+;;                   (mapconcat #'identity
+;;                              `("java"
+;;                                "-jar"
+;;                                ;;,(expand-file-name "~/bin/Clip.jar")
+;;                                ,(expand-file-name  org-wiki-clip-jar-path)
+;;                                "--name"
+;;                                ,(concat "\"" image-name "\"")
+;;                                ,(concat "\"" dir "\"")
+;;                                )
+;;                              " "
+;;                              )))))))))
 
-(defun org-wiki-paste-image-uuid ()
-  "Paste a image with automatic generated name (uuid)."
-  (interactive)
-  (let* ((dir   (file-name-base
-                    (buffer-file-name))))
+;; (defun org-wiki-paste-image-uuid ()
+;;   "Paste a image with automatic generated name (uuid)."
+;;   (interactive)
+;;   (let* ((dir   (file-name-base
+;;                     (buffer-file-name))))
 
-    (org-wiki--assets-make-dir dir)
+;;     (org-wiki--assets-make-dir dir)
 
-    (insert "#+CAPTION: ")
-    (save-excursion
-      (insert "\n")
-      (insert
-       (org-make-link-string
-        (concat "file:"
-                  (string-trim
-                   (shell-command-to-string
-                    (mapconcat #'identity
-                               `("java"
-                                 "-jar"
-                                        ;;,(expand-file-name "~/bin/Clip.jar")
-                                 ,(expand-file-name  org-wiki-clip-jar-path)
-                                 "--uuid"
-                                 ,(concat "\"" dir "\""))
-
-                               " "
-                               )))))))))
-
-
-;; Custom Minor Mode
-(define-minor-mode org-wiki-panel-minor-mode
-  "Ishell multi line mode"
-  ;; The initial value - Set to 1 to enable by default
-  nil
-  ;; The indicator for the mode line.
-  nil
-  ;; The minor mode keymap
-  `(
-    ;; Commands to Open Index page:
-    (,(kbd "bii")        .  org-wiki-index)
-    (,(kbd "bfi")        .  org-wiki-index-frame)
-    (,(kbd "bbi")        .  org-wiki-index-html)
-
-    ;; ==== Commands to browse pages ==========
-    (,(kbd "hh")        .  org-wiki)
-    (,(kbd "hj")        .  org-wiki-switch )
-    (,(kbd "hr")        .  org-wiki-read-only)
-    (,(kbd "hf")        .  org-wiki-frame)
-    (,(kbd "kk")        .  org-wiki-close)
-
-    ;; ==== Commands to browse directories =====
-    (,(kbd "dw")        .  org-wiki-dired )
-    (,(kbd "do")        .  org-wiki-open)
-
-    ;; ==== Install Menu =======================
-    (,(kbd "smm")        .  org-wiki-make-menu)
-    (,(kbd "see")        .  org-wiki-export-html)
-    (,(kbd "sec")        . (lambda () (interactive) (customize-group "org-wiki")))
-    (,(kbd "seg")        . (lambda () (interactive) (browse-url "http://www.github.com/caiorss/org-wiki")))
-
-    ;; === Toggle commands =====================
-    (,(kbd "tts")        .  org-wiki-server-toggle)
-    ;; (,(kbd "ttl")        .  org-toggle-link-display)
-    ;; (,(kbd "tti")        .  org-toggle-inline-images)
-
-    (,(kbd "tty")        . (lambda () (interactive)
-                             (tool-bar-mode 'toggle)
-                             (menu-bar-mode 'toggle)
-                             ))
-
-    (,(kbd "ttb")        . (lambda () (interactive) (tool-bar-mode 'toggle)))
-    (,(kbd "ttm")        . (lambda () (interactive) (menu-bar-mode 'toggle)))
-
-    (,(kbd "q")         . (lambda () (interactive) (kill-buffer)))
-    )
-   ;; Make mode local to buffer rather than global
-   ;; :global t
-)
-
-
+;;     (insert "#+CAPTION: ")
+;;     (save-excursion
+;;       (insert "\n")
+;;       (insert
+;;        (org-make-link-string
+;;         (concat "file:"
+;;                   (string-trim
+;;                    (shell-command-to-string
+;;                     (mapconcat #'identity
+;;                                `("java"
+;;                                  "-jar"
+;;                                         ;;,(expand-file-name "~/bin/Clip.jar")
+;;                                  ,(expand-file-name  org-wiki-clip-jar-path)
+;;                                  "--uuid"
+;;                                  ,(concat "\"" dir "\""))
+;;                                " "
+;;                                )))))))))
 
 (defun org-wiki-rgrep (pattern)
   "Search org-wiki with a regex pattern."
@@ -1147,21 +901,19 @@ Note: This command requires Python3 installed."
   (find-dired org-wiki-location
               (mapconcat #'identity
                          '(
-                           "-not -path '*/.git*'"         ;; Exclude .git Directory
-                           "-and -not -name '.#*'"        ;; Exclude temporary files starting with #
+                           ;; Exclude .git Directory
+                           "-not -path '*/.git*'"
+                           ;; Exclude temporary files starting with #
+                           "-and -not -name '.#*'"
                            "-and -not -name '#*'"
                            "-and -not -name '*#'"
-                           "-and -not -name '*~' "        ;; Exclude ending with ~ (tilde)
-                           "-and -not -name '*.html' "    ;; Exclude html files
+                           ;; Exclude ending with ~ (tilde)
+                           "-and -not -name '*~' "
+                           ;; Exclude html files
+                           "-and -not -name '*.html' "
                            )
-
                          " "
                          )))
-
-(defun org-wiki-website ()
-  "Open org-wiki github repository."
-  (interactive)
-  (browse-url "http://www.github.com/caiorss/org-wiki"))
 
 (defun org-wiki-header ()
   "Insert a header at the top of the file."
@@ -1185,56 +937,7 @@ Note: This command requires Python3 installed."
       (goto-char (point-min))
       (insert text2))))
 
-(defun org-wiki-panel ()
-  "Create a command panel for org-wiki."
-  (interactive)
-  (let ((buf (get-buffer-create "*org-wiki-panel*")))
-    (switch-to-buffer buf)
-    (kill-region (point-min) (point-max))
-    (org-wiki-panel-minor-mode)
-    (insert
-     "                       Org-wiki command panel
-Open Index Page
-
-  [bii] - Go to index.                           - M-x org-wiki-index
-  [bfi] - Go to index in a new frame.            - M-x org-wiki-index-frame
-  [bbi] - Open index page in browser             - M-x org-wiki-index-html
-
-Browse Pages
-
-  [kk]  - Close all wiki buffers                 - M-x org-wiki-close
-  [hh]  - Open a page.                           - M-x org-wiki
-  [hj]  - Switch between org-wiki buffers        - M-x org-wiki-switch
-  [hr]  - Open a page in read-only mode.         - M-x org-wiki-read-only
-  [hf]  - Open a page in a new frame.            - M-x org-wiki-frame
-
-
-Open Directory
-
-  [dw]  - Open wiki directory in dired buffer    - M-x org-wiki-index
-  [do]  - Open wiki directory in file manager    - M-x org-wiki-open
-
-Special Commands
-
-  [q ]  - Quit.
-  [sec] - Customize org-wiki                      - M-x customize-group org-wiki
-  [see] - Export to all pages to html             - M-x org-wiki-export-html
-  [smm] - Install org-wiki menu.                  - M-x org-wiki-make-menu
-  [seg] - Go to org-wiki web site
-
-Toggle
-
-  [tts] - Toggle org-wiki-server                  - M-x org-wiki-server-toggle
-
-  [tty] - Toggle Emacs toolbar and menu
-  [ttb] - Toggle Emacs toolbar
-  [ttm] - Toggle Emacs menu bar
-"
-     ))
-  (read-only-mode))
-
 ;; =========== Copy Path Commands ============= ;;
-
 
 (defun org-wiki-copy-location ()
   "Copy org-wiki location path to clipboard."
@@ -1267,25 +970,22 @@ Toggle
      (message (format "Copied to clipboard: %s" msg))
      (clipboard-kill-region (point-min) (point-max)))))
 
-
 ;; ============ Backup Commands =============== ;;
-
-
 (defun org-wiki-backup-make ()
   "Make a org-wiki backup."
   (interactive)
-  (let* ((zipfile            (concat "org-wiki-" (format-time-string "%Y-%m-%d") ".zip"))
-         (destfile           (concat (file-name-directory org-wiki-backup-location) zipfile))
-         (default-directory  org-wiki-location))
+  (let* ((zipfile
+          (concat "org-wiki-" (format-time-string "%Y-%m-%d") ".zip"))
+         (destfile
+          (concat (file-name-directory org-wiki-backup-location) zipfile))
+         (default-directory
+           org-wiki-location))
     (switch-to-buffer "*org-wiki-backup*")
-
     ;; Crate org-wiki backup location directory if doesn't exist.
     (if (not (file-exists-p org-wiki-backup-location))
         (make-directory org-wiki-backup-location t))
-
     (if (file-exists-p destfile) (delete-file destfile))
     (if (file-exists-p zipfile)  (delete-file zipfile))
-
     ;; Clear buffer removing all lines
     (delete-region (point-min) (point-max))
     (set-process-sentinel
@@ -1301,31 +1001,26 @@ Toggle
            (switch-to-buffer "*org-wiki-backup*")
            (rename-file zipfile org-wiki-backup-location t)
            (message "Backup done. Ok.")
-           (insert  "\nBackup done. Ok. Run M-x org-wiki-backup-dir to open backup directory.")
-            ))))))
+           (insert  "\nBackup done. Ok")
+           ))))))
 
 (defun org-wiki-backup-dir ()
-    "Open org-wiki backup directory in dired mode."
-    (interactive)
-    ;; Create org-wiki backup location directory if doesn't exist.
-    (if (not (file-exists-p org-wiki-backup-location))
-        (make-directory org-wiki-backup-location t))
-    ;; Open backup location
-    (dired org-wiki-backup-location)
-    ;; Update buffer
-    (revert-buffer))
+  "Open org-wiki backup directory in dired mode."
+  (interactive)
+  ;; Create org-wiki backup location directory if doesn't exist.
+  (if (not (file-exists-p org-wiki-backup-location))
+      (make-directory org-wiki-backup-location t))
+  ;; Open backup location
+  (dired org-wiki-backup-location)
+  ;; Update buffer
+  (revert-buffer))
 
 ;; ============ Command Alias ================= ;;
 
-;; (defun org-wiki-nav ()
-;;   "Navigate through org-mode headings. Alias to helm-org-in-buffer-headings."
-;;   (interactive)
-;;   (helm-org-in-buffer-headings))
-
-;; (defun org-wiki-occur ()
-;;   "Search current buffer with helm-occur. Alias to helm-occur."
-;;   (interactive)
-;;   (helm-occur))
+(defun org-wiki-nav ()
+  "Navigate through org-mode headings. Alias to org-goto."
+  (interactive)
+  (org-goto))
 
 (defun org-wiki-toggle-images ()
   "Toggle inline images. Alias to M-x org-toggle-inline-images."
@@ -1336,291 +1031,6 @@ Toggle
   "Toggle link display. Alias to M-x org-toggle-link-display"
   (interactive)
   (org-toggle-link-display))
-
-(defun org-wiki-latex ()
-  "Display latex formulas. Alias to M-x org-preview-latex-fragment"
-  (interactive)
-  (org-preview-latex-fragment))
-
-
-(defun org-wiki-insert-latex ()
-  "Insert a latex template at point"
-  (interactive)
-  (let* ((template
-          (ido-completing-read "LaTeX Templates: "
-                               (mapcar
-                                (lambda (p)
-                                  (cons (concat (car p) " = " (cdr p))
-                                        (cdr p)))
-                                org-wiki-latex-templates))))
-    (insert template)))
-
-(defun org-wiki-insert-symbol ()
-  "Insert symbols from math, physics, Greek letters and others."
-  (interactive)
-  (let* ((template
-          (ido-completing-read "General math and misc symbols:;"
-                               (mapcar
-                                (lambda (p)
-                                  (cons (concat (car p) " = " (cdr p))
-                                        (cdr p)))
-                                org-wiki-symbol-list))))
-    (insert template)))
-
-(defun org-wiki-insert-block ()
-  "Insert org-mode blocks  such as Latex equation, code block, quotes, tables and etc."
-  (interactive)
-  (let* ((block
-          (ido-completing-read "Org-mode code block"
-                               org-wiki-template-blocks)))
-    (insert block)))
-
-;; ========= org-wiki Internal databases  =========== ;;
-
-;; Variable containing useful math, physics, currencies and greek letters used by function
-;; org-wiki-insert-symbol
-(defvar org-wiki-symbol-list
-     '(
-       ("alpha" .  "α")
-       ("beta" .  "β")
-       ("gamma" ."γ")
-       ("Gamma" ."Γ")
-       ("delta" . "δ")
-       ("Delta" . "Δ")
-       ("episilon" ."ε")
-       ("zeta" ."ζ")
-       ("eta" ."η")
-       ("theta" ."θ")
-       ("Theta" ."Θ")
-       ("iota" ."ι")
-       ("kappa" ."κ")
-       ("lambda" ."λ")
-       ("mu" ."μ")
-       ("nu" ."ν")
-       ("pi" ."π")
-       ("Pi" ."Π")
-       ("rho" ."")
-       ("sigma" ."σ")
-       ("Sigma" ."Σ")
-       ("tau" ."τ")
-       ("upsilon" ."υ")
-       ("phi" ."φ")
-       ("Phi" ."Φ")
-       ("psi" ."Ψ")
-       ("omega" ."ω")
-       ("Omega" ."Ω")
-
-       ("Multiplication sign" . "×")
-       ("Multiplication dot (sdot)" . "⋅")
-       ("Division sign" . "÷")
-
-      ;;; Mathematical Symbols for calculus
-       ("Square root sqrt" . "√")
-       ("Cubic root cbrt" . "∛")
-       ("Fourth root" . "∜")
-
-       ("Infinity" . "∞")
-       ("summation" . "Σ")
-       ("product - big PI" . "Π")
-       ("nabla" . "∇")
-       ("integral" ."∫")
-       ("double integral" . "∬")
-       ("triple integral" . "∭")
-       ("minus or equal +-" . "±")
-       ("approximately equal ~=" . "≈")
-       ("Partial derivate" . "∂")
-       ("tensor-prod" . "⊗")
-       ("Direct sum or Exclusive or" . "⊕")
-       ("Gradient, nabla" ."∇")
-
-       ("Laplace transform" . "ℒ")
-       ("Fourier transform" . "ℱ")
-
-       ;; Symbols for set algebra
-       ("Empty set" . "∅")
-       ("Set membership" . "∈")
-       ("Universal quantifier" . "∀")
-       ("Existential quantifier" . "∃")
-       ("If only if, triple bar" . "≡")
-
-       ("Logic - Logical NOT" . "¬")
-       ("Logic - Logical AND" . "∧")
-       ("Logic - Logical OR" . "∨")
-
-
-       ("Real numbers" . "ℝ")
-
-       ;; Misc Symbols
-       ("Per mile" . "‰")
-       ("Per basis points" . "‱")
-       ("Degree" . "°")
-       ("Fahrenheit" . "℉")
-       ("Celsius" . "℃")
-       ("Angstrom" . "Å")
-       ("Electromotive force e.m.f" . "ℰ")
-       ("Sign - Sound recording symbol" . "Ⓟ")
-       ("Sign - Registered Copyright" . "®")
-       ("Sign - Copyright" . "©")
-       ("Left arrow" . "←")
-       ("Right arrow" . "→")
-       ("Down arrow" . "↓")
-       ("Up arrow" . "↑")
-       ("Black big star" . "★")
-       ("With big star" . "☆")
-       ("Pentagram" . "⛤")
-
-       ;; Geometry
-       ("Geometry - angle" . "∠")
-       ("Geometry - measured angle" . "∡")
-       ("Geometry - Spherical angle" . "∢")
-       ("Geometry - Perpendicular to" . "⟂")
-       ("Geometry - right angle" . "∟")
-
-      ;; Health and safety
-       ("WARN Skull and crossbones" . "☠")
-       ("WARN Radioactive" . "☢")
-       ("WARN Biohazard" . "☣")
-       ("WARN Warning sign" . "⚠")
-       ("WARN High voltage" . "⚡")
-
-      ;; Fractions
-       ("Fraction one-quarter" . "¼")
-       ("Fraction one-half" . "½")
-       ("Fraction one-third" . "⅓")
-       ("Fraction two-thirds" . "⅔")
-       ("Fraction one-fifth" . "⅕")
-       ("Fraction three-quarters" . "¾")
-       ("Fraction one-seventh" . "⅐")
-       ("Fraction one-ninth"  . "⅑")
-
-       ;; Currencies
-       ("Currency Dollar" . "$")
-       ("Currency GPB Sterling pounds" . "£")
-       ("Currency Euro" . "€")
-       ("Currency Yen, Yuan, Reminbi (China)" . "¥")
-       ("Currency Won" . "₩")
-       ("Currency Russian Ruble" . "₽")
-       ("Currency Lira" . "₤")
-       ("Currency Bitcoin" . "₿")
-       ("Currency Indian Rupee" . "₹")
-       ))
-
-(defvar org-wiki-template-blocks
-      '(
-        ("General code block" . "#+BEGIN_SRC \n\n#+END_SRC")
-        ("Latex equation"     . "\\begin{equation} \n\n\\end{equation}")
-        ("Latex equation with name"     . "#+NAME: eqn:myequation \n\\begin{equation} \n2x + x^2\n\\end{equation}")
-        ("Table" . "|  |  |  |\n|--|--|--|\n|  |  |  |\n|  |  |  | \n")
-        ("Quote"              .  "#+BEGIN_QUOTE \n\n#+END_QUOTE")
-        ("Verse"              .  "#+BEGIN_VERSE \n\n#+END_VERSE")
-        ("Example"            .  "#+BEGIN_EXAMPLE \n\n#+END_EXAMPLE")
-        ("HTML"               .  "#+BEGIN_HTML \n\n#+END_HTML")
-        ("Python code block"  . "#+BEGIN_SRC python \n\n#+END_SRC")
-        ("Ruby code block"    . "#+BEGIN_SRC ruby \n\n#+END_SRC")
-        ("JavaScript block"   . "#+BEGIN_SRC js \n\n#+END_SRC")
-        ("R code block"       . "#+BEGIN_SRC R \n\n#+END_SRC")
-        ("Elisp code block"   . "#+BEGIN_SRC elisp \n\n#+END_SRC")
-        ("C++ code block"     . "#+BEGIN_SRC cpp \n\n#+END_SRC")
-        ("Scala code block"     . "#+BEGIN_SRC scala \n\n#+END_SRC")
-        ))
-
-;; Latex templates used by user command M-x org-wiki-insert-latex
-(defvar org-wiki-latex-templates
-  '(
-  ("Latex equation block " . "\\begin{equation}\n\n\\end{equation}")
-  ("Basic Fraction num/den - ½" . "\\frac{num}{den}")
-  ("Basic Summation - Σ from a to b"    . "\\sum_{a}^{b}")
-  ("Basic Product - Π from a to b" . "\\prod_{a}^{b}")
-  ("Basic Binomial coefficient (n k) = n! / ((n -k)! x k!) " . "{n \\choose k}")
-
-  ("Calculus Limit lim(x -> ∞) f(x)" . "\\lim_{x \\to \\infty} f(x)")
-  ("Calculus Integral  - ∫ from a to b"  . "\\int_{a}^{b}")
-  ("Calculus Infinity  - ∞" . "\\infty")
-  ("Calculus Gradient, nabla - ∇" . "\\nabla")
-  ("Calculus Derivate of f df/dx" . "\\frac{df}{dx}" )
-  ("Calculus Second Derivate of f d^2f/dx^2" . "\\frac{d^2f}{dx^2}" )
-  ("Calculus Derivate operation d/dx p(x)" . "\\frac{d}{dx} p(x)" )
-  ("Calculus Second Derivate operation d^2/dx^2 p(x)" . "\\frac{d^2}{dx^2} p(x)" )
-  ("Calculus Partial derivate - ∂" . "\\partial")
-  ("Calculus Partial derivate fraction ∂x/∂t" . "\\frac{\\partial x}{\\partial y}")
-  ("Calculus Second Partial derivate fraction ∂2x/∂t2" . "\\frac{\\partial^2 x}{\\partial y^2}")
-
-  ("Operator - Is not equal to <> or /="    . "\\neq")
-  ("Operator - Equivalent or if only if ≡"  . "\\equiv")
-  ("Operator - less or equal <="            . "\\eql")
-  ("Operator - greater or equal >="         . "\\geq")
-  ("Operator - times x"                     . "\\times")
-  ("Operator - div %"                       . "\\div")
-  ("Operator - Approximately ~="            . "\\prox")
-  ("Operator - Proportional to ∝"           . "\\propto")
-
-  ("Escape - $"              . "\\textdollar")
-  ("Escape - Underline - _ " . "\\_")
-  ("Escape - Ampersand - &"  . "\\&")
-  ("Escape - percent - %"    . "\\%")
-  ("Escape - tilde ~"        . "\\sim")
-
-  ("Func - limit" . "\\lim")
-  ("Func - √ square root sqrt" . "\\sqrt{}")
-  ("Func - n√ nth root" . "\\sqrt[n]{}")
-
-  ("Enclosing () - Big parenthesis" . "\\left( <expr> \\right)")
-  ("Enclosing \/ - Underbrace" . "\\underbrace{ <expr> }")
-  ("Enclosing /\ - Overbrace" . "\\overbrace{ <expr> }")
-
-  ("Accent - hat â, î" . "\\hat{}")
-  ("Accent - grave à, ì" . "\\grave{}")
-  ("Accent - bar - stroke over symbol" . "\\bar{}")
-  ("Accent - tilde - ã, ĩ - tilde over symbol" . "\\tilde{}")
-  ("Accent - dot (derivate) symbol" . "\\dot{}")
-  ("Accent - double dot (double derivate) symbol" . "\\ddot{}")
-  ("Accent - arrow over symbol, vector" . "\\vec{}")
-
-  ;; Set notation
-  ("Sets - N Set of Natural Numbers" . "\\N")
-  ("Sets - Z Set of Integers" . "\\Z")
-  ("Sets - ℝ Real Numbers" . "\\R")
-  ("Sets - C Complex Numbers" . "\\C")
-  ("Sets - H Quaternions" . "\\H")
-  ("Sets - ∈ Is member of" . "\\in")
-  ("Sets - ∃ Exists" . "\\exists")
-  ("Sets - ∀ forall universal quantifier" . "\\forall")
-  ("Sets - ¬ Logical NOT" . "\\neg")
-  ("Sets - ∨ Logical OR" . "\\lor")
-  ("Sets - ∧ Logical OR" . "\\land")
-
-  ;; Greek letters
-  ("Greek α - lower alpha" . "\\alpha")
-  ("Greek β - lower beta" . "\\beta")
-  ("Greek σ - lower sigma" . "\\sigma")
-  ("Greek Σ - upper sigma" . "\\Sigma")
-  ("Greek γ - lower gamma" . "\\gamma")
-  ("Greek Γ - upper gamma" . "\\Gamma")
-  ("Greek δ - lower delta" . "\\delta")
-  ("Greek Δ - upper delta" . "\\Delta")
-  ("Greek λ - lower lambda" . "\\lambda")
-  ("Greek Λ - Upper lambda" . "\\Lambda")
-  ("Greek ε - epsilon"     . "\\vepisilon")
-  ("Greek ε - varepsilon"  . "\\episilon")
-  ("Greek ζ - zeta" . "\\zeta")
-  ("Greek η - eta" . "\\eta")
-  ("Greek μ - mu" . "\\mu")
-  ("Greek ρ - rho" . "\\rho")
-  ("Greek φ - lower phi" . "\\phi")
-  ("Greek Φ - upper phi" . "\\Phi")
-  ("Greek ω - lower omega" . "\\omega")
-  ("Greek Ω - upper omega" . "\\Omega")
-  ("Greek Ψ - psi" . "\\psi")
-  ("Greek τ - tau" . "\\tau")
-  ("Greek ι - lower iota" . "\\iota")
-  ("Greek ξ - lower xi" . "\\xi")
-  ("Greek Ξ - upper xi" . "\\xi")
-  ("Symbol -> Right arrow" . "\\rightarrow")
-  ("Symbol <- Left arrow"  . "\\leftarrow")
-  ("Symbol    Up arrow"    . "\\uparrow")
-  ("Symbol    Down arrow"  . "\\downarrow")
-  ))
-
 
 (provide 'org-wiki)
 ;;; org-wiki.el ends here
