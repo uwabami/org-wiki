@@ -83,12 +83,24 @@ You can toggle read-only mode with M-x read-only-mode or C-x C-q."
   )
 
 (defcustom org-wiki-completing-backend 'completing-read
-  "set completing backend.
+  "Set completing backend.
 Supported: completing-read(default), ido, helm, consult"
   :type '(choice
           (const :tag "completing-read" 'completing-read)
           (const :tag "helm" 'helm)
           (const :tag "consult" 'consult))
+  :group 'org-wiki
+  )
+
+(defcustom org-wiki-publish-relative nil
+  "Toogle publish relative or not"
+  :type 'boolean
+  :group 'org-wiki
+  )
+
+(defcustom org-wiki-publish-root ""
+  "set relative root path for org-wiki-publish-relative"
+  :type 'string
   :group 'org-wiki
   )
 
@@ -260,6 +272,7 @@ ELISP> (org-wiki--page->file \"Linux\")
   "Get current org-wiki page's name bound to current buffer."
   (org-wiki--file->page (buffer-file-name)))
 
+;;;###autoload
 (defun org-wiki--current-page-asset-dir ()
   "Get current org-wiki page's asset directory"
   (interactive)
@@ -378,10 +391,14 @@ org-wiki-location."
 Example: The hyperlink [[wiki:Linux][Dealing with Linux]]
 will be exported to <a href='Linux.html'>Dealing with Linux</a>"
    (cl-case backend
-     (html (format
-            "<a href='%s.html'>%s</a>"
-            path
-            (or desc path)))))
+     (html
+      (if org-wiki-publish-relative
+          (format
+           "<a href='%s/%s.html'>%s</a>"
+           org-wiki-publish-root path (or desc path))
+        (format
+         "<a href='%s.html'>%s</a>" path (or desc path)))
+      )))
 
 (defun org-wiki--make-link (pagename)
   "Return a string containing a wiki link [[wiki:PAGENAME][PAGENAME]].
@@ -779,6 +796,7 @@ in this way: [[file:Linux/logo.png][file:Linux/logo.png/]]."
      (org-wiki--assets-make-dir page)
      (dired (org-wiki--assets-get-dir page)))))
 
+;;;###autoload
 (defun org-wiki-asset-insert ()
   "Insert link wiki-asset-sys:<page>;<file> to an asset file of current page..
 It inserts a link of type wiki-asset-sys:<Wiki-page>;<Asset-File>
@@ -793,6 +811,7 @@ Example:  [[wiki-asset-sys:Linux;LinuxManual.pdf]]"
               (read-string "Description: " (file-name-nondirectory file))
               )))))
 
+;;;###autoload
 (defun org-wiki-asset-insert-block ()
   "Insert code block with contents of some asset file."
   (interactive)
@@ -812,6 +831,7 @@ Example:  [[wiki-asset-sys:Linux;LinuxManual.pdf]]"
        (insert "\n#+END_SRC")
        ))))
 
+;;;###autoload
 (defun org-wiki-asset-find-file ()
   "Open a menu to select an asset file of current page
 and open it with Emacs.
@@ -825,6 +845,7 @@ it will open the file below with Emacs.
   (interactive)
   (org-wiki--asset-selection #'find-file))
 
+;;;###autoload
 (defun org-wiki-asset-find-sys ()
   "Open a menu to select an asset file of current page and open it with system's app.
 Example: If the current page is 'Smalltalk programming' and the
@@ -839,12 +860,14 @@ Okular reader."
 ;;
 ;; @SECTION: User commands
 
+;;;###autoload
 (defun org-wiki-help ()
   "Show org-wiki commands."
   (interactive)
   (command-apropos "org-wiki-"))
 
 
+;;;###autoload
 (defun org-wiki-index ()
   "Open the index page: <org-wiki-location>/index.org.
 
@@ -852,7 +875,7 @@ Okular reader."
   (interactive)
   (org-wiki--open-page org-wiki-index-file-basename))
 
-
+;;;###autoload
 (defun org-wiki-index-html ()
   "Open the Wiki (Index) in the default web browser."
   (interactive)
@@ -860,24 +883,28 @@ Okular reader."
                       (org-wiki--page->html-file
                        org-wiki-index-file-basename))))
 
+;;;###autoload
 (defun org-wiki-index-frame ()
   "Open the index page in a new frame."
   (interactive)
   (with-selected-frame (make-frame)
     (org-wiki-index)))
 
+;;;###autoload
 (defun org-wiki-dired-all ()
   "Open the wiki directory in ‘dired-mode’ showing all files."
   (interactive)
   (dired org-wiki-location)
   (dired-hide-details-mode))
 
+;;;###autoload
 (defun org-wiki-dired ()
   "Open the wiki directory showing only the wiki pages."
   (interactive)
   (dired (org-wiki--concat-path org-wiki-location "*.org"))
   (dired-hide-details-mode))
 
+;;;###autoload
 (defun org-wiki-asset-dired ()
   "Open the asset directory of current wiki page."
   (interactive)
@@ -885,7 +912,7 @@ Okular reader."
     (org-wiki--assets-make-dir pagename)
     (dired (org-wiki--assets-get-dir pagename))))
 
-
+;;;###autoload
 (defun org-wiki-asset-create ()
   "Prompts the user for a file name that doesn't exist yet and insert it at point.
 Unlike the commands `org-wiki-asset-insert` or ` org-wiki-asset-insert-file` this command
@@ -910,6 +937,7 @@ this file:Linux/scriptDemoQT.py .
                )))))
 
 
+;;;###autoload
 (defun org-wiki-asset-download-insert1 ()
   "Download a file from a URL in the clibpoard and inserts a link wiki-asset-sys:.
 Note: This function is synchronous and blocks Emacs. If Emacs is stuck
@@ -920,6 +948,7 @@ type C-g to cancel the download."
      (save-excursion (insert (format "[[wiki-asset-sys:%s;%s][%s]]"
                                      pagename output-file output-file))))))
 
+;;;###autoload
 (defun org-wiki-asset-download-insert2 ()
   "Download a file from a URL in the clibpoard and inserts a link file:<page>/<asset-file>.
 Note: This function is synchronous and blocks Emacs. If Emacs gets frozen type C-g
@@ -930,6 +959,7 @@ to cancel the download."
      (save-excursion (insert (format "file:%s/%s" pagename output-file ))))))
 
 
+;;;###autoload
 (defun org-wiki-close ()
   "Close all opened wiki pages buffer and save them."
   (interactive)
@@ -946,6 +976,7 @@ to cancel the download."
   (message "All wiki files closed. Ok."))
 
 
+;;;###autoload
 (defun org-wiki-close-image ()
   "Close all image/picture buffers which files are in org-wiki directory."
   (interactive)
@@ -958,6 +989,7 @@ to cancel the download."
   (message "All wiki images closed. Ok."))
 
 
+;;;###autoload
 (defun org-wiki-insert-new ()
   "Create a new org-wiki and insert a link to it at point."
   (interactive)
@@ -966,11 +998,13 @@ to cancel the download."
                                                   page-name
                                                   )))))
 
+;;;###autoload
 (defun org-wiki-new ()
   "Create a new wiki page and open it without inserting a link."
   (interactive)
   (org-wiki--open-page (read-string "Page Name: ")))
 
+;;;###autoload
 (defun org-wiki-html-page ()
   "Open the current wiki page in the browser.  It is created if it doesn't exist yet."
   (interactive)
@@ -979,12 +1013,14 @@ to cancel the download."
         (org-html-export-to-html))
   (browse-url html-file)))
 
+;;;###autoload
 (defun org-wiki-html-page2 ()
   "Exports the current wiki page to html and opens it in the browser."
   (interactive)
   (org-html-export-to-html)
   (browse-url (org-wiki--replace-extension (buffer-file-name) "html")))
 
+;;;###autoload
 (defun org-wiki-search ()
   "Search all wiki pages that contains a pattern (regexp or name)."
   (interactive)
@@ -993,11 +1029,13 @@ to cancel the download."
          org-wiki-location
          nil))
 
+;;;###autoload
 (defun org-wiki-open ()
   "Opens the wiki repository with system's default file manager."
   (interactive)
   (org-wiki-xdg-open org-wiki-location))
 
+;;;###autoload
 (defun org-wiki-asset-open ()
   "Open asset directory of current page with system's default file manager."
   (interactive)
@@ -1016,6 +1054,7 @@ to cancel the download."
             (org-combine-plists (cdr plist-base) org-wiki-publish-plist))
     plist-base))
 
+;;;###autoload
 (defun org-wiki-export-with (org-exporter)
   "Export all pages to a given format. See full doc.
 ORG-EXPORTER is a function that exports an org-mode page to a specific format like html.
@@ -1034,7 +1073,7 @@ the exporting doesn't finish. Type C-g to abort the execution."
         )
     (org-publish pub-plist t)))
 
-
+;;;###autoload
 (defun org-wiki-export-html-sync ()
   "Export all pages to html in synchronous mode."
   (interactive)
@@ -1044,6 +1083,7 @@ the exporting doesn't finish. Type C-g to abort the execution."
         )
     (org-publish pub-plist t)))
 
+;;;###autoload
 (defun org-wiki-export-html ()
   "Export all pages to html.
 Note: This function doesn't freeze Emacs since it starts another Emacs process."
@@ -1058,6 +1098,7 @@ Note: This function doesn't freeze Emacs since it starts another Emacs process."
                       " "
                       )))
 
+;;;###autoload
 (defun org-wiki-make-menu ()
   "Optional command to build an utility menu."
   (interactive)
@@ -1116,6 +1157,7 @@ Note: This function doesn't freeze Emacs since it starts another Emacs process."
 ;; Python3 simple http server, it can be refactored to work
 ;; with another more powerful http server such as Nginx.
 ;;
+;;;###autoload
 (defun org-wiki-server-toggle ()
   "Start/stop org-wiki http server. It requires Python3.
 Note: This command requires Python3 installed."
@@ -1160,6 +1202,7 @@ Note: This command requires Python3 installed."
                 (message "Server stopped.")
                 ))))
 
+;;;###autoload
 (defun org-wiki-paste-image ()
   "Paste a image asking the user for the file name."
   (interactive)
@@ -1189,6 +1232,7 @@ Note: This command requires Python3 installed."
                              " "
                              )))))))))
 
+;;;###autoload
 (defun org-wiki-paste-image-uuid ()
   "Paste a image with automatic generated name (uuid)."
   (interactive)
