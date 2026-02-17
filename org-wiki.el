@@ -8,7 +8,7 @@
 ;; Keywords: org-mode, wiki, notes, notebook
 ;; Version: 5.1
 ;; URL: https://www.github.com/uwabami/org-wiki'
-;; Package-Requires: ((cl-lib "0.5"))
+;; Package-Requires: ((cl-lib "0.5") (htmlize "1.5"))
 ;; Note: This is a fork. original version is here:
 ;;  https://www.github.com/caiorss/org-wiki'
 
